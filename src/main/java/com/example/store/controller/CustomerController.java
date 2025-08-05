@@ -1,31 +1,35 @@
 package com.example.store.controller;
 
-import com.example.store.dto.CustomerDTO;
-import com.example.store.entity.Customer;
-import com.example.store.service.CustomerService;
+import com.example.store.api.CustomersApi;
+import com.example.store.model.CustomerDTO;
+import com.example.store.service.api.CustomerService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/customer")
 @RequiredArgsConstructor
-public class CustomerController {
+public class CustomerController implements CustomersApi {
 
     private final CustomerService customerService;
 
-    @GetMapping
-    public List<CustomerDTO> getAllCustomers() {
-        return customerService.getAllCustomers();
+    @PostMapping
+    @Override
+    public ResponseEntity<CustomerDTO> createCustomer(CustomerDTO customerDTO) {
+        return null;
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public CustomerDTO createCustomer(@RequestBody Customer customer) {
-        return customerService.createCustomer(customer);
+    @GetMapping
+    @Override
+    public ResponseEntity<List<CustomerDTO>> getCustomers() {
+        List<CustomerDTO> customerDtos = customerService.getAllCustomers();
+        return ResponseEntity.ok(customerDtos);
     }
 }
