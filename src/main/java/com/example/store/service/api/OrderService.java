@@ -1,13 +1,8 @@
-package com.example.store.service;
+package com.example.store.service.api;
 
-import com.example.store.dto.OrderDTO;
-import com.example.store.entity.Order;
-
+import com.example.store.model.OrderDTO;
 import java.util.List;
 
-/**
- * Service interface for managing order operations.
- */
 public interface OrderService {
     
     /**
@@ -20,8 +15,8 @@ public interface OrderService {
     /**
      * Creates a new order.
      *
-     * @param order the order entity to create
+     * @param orderDTO the order entity to create
      * @return the created order as DTO
      */
-    OrderDTO createOrder(Order order);
+    OrderDTO createOrder(OrderDTO orderDTO);
 }
