@@ -5,6 +5,7 @@ plugins {
     id 'org.liquibase.gradle' version '2.2.0'
     id 'com.diffplug.spotless' version '6.25.0'
     id 'jacoco'
+    id 'org.openapi.generator' version '7.4.0'
 }
 
 group = 'com.example'
@@ -51,7 +52,6 @@ dependencies {
     testAnnotationProcessor 'org.mapstruct:mapstruct-processor:1.6.2'
 
 
-
 }
 
 tasks.named('test') {
@@ -71,4 +71,24 @@ tasks.jacocoTestReport {
                     exclude: ['**/mapper/**', '**/StoreApplication.class'])
         })
     }
+}
+
+
+openApiGenerate {
+    inputSpec.set("$rootDir/src/main/resources/specification/OpenAPI.yaml")
+    generatorName = "spring"
+    apiPackage = "com.example.store"
+    invokerPackage = "com.example.store.api"
+    modelPackage = "com.example.store.model"
+    outputDir = "$buildDir/generated"
+    configOptions = [
+            interfaceOnly: "true",
+            skipDefaultInterface: "true",
+    ]
+}
+
+compileJava.dependsOn tasks.openApiGenerate
+
+clean {
+    delete "$buildDir/generated"
 }
