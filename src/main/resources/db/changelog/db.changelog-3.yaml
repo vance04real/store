@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3-update-customer-schema
+      author: developer@securitease.com
+      changes:
+        - addColumn:
+            tableName: customer
+            columns:
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+              - column:
+                  name: first_name
+                  type: VARCHAR(255)
+              - column:
+                  name: last_name
+                  type: VARCHAR(255)
+              - column:
+                  name: suffix
+                  type: VARCHAR(255)
+        - sql:
+            sql: >
+              UPDATE customer
+              SET first_name = SUBSTRING(name FROM 1 FOR POSITION(' ' IN name) - 1),
+                  last_name = SUBSTRING(name FROM POSITION(' ' IN name) + 1)
+              WHERE POSITION(' ' IN name) > 0;
+              
+              UPDATE customer
+              SET first_name = name,
+                  last_name = name
+              WHERE POSITION(' ' IN name) = 0;
+        - dropColumn:
+            tableName: customer
+            columnName: name
+        - addNotNullConstraint:
+            tableName: customer
+            columnName: first_name
+            columnDataType: VARCHAR(255)
+        - addNotNullConstraint:
+            tableName: customer
+            columnName: last_name
+            columnDataType: VARCHAR(255)

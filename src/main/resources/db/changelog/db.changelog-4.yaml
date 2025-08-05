@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4-add-customer-indexes
+      author: devoninterview@securitease.com
+      comment: Add indexes to improve customer search performance
+      changes:
+        # Individual index on last_name for last name searches and sorting
+        - createIndex:
+            tableName: customer
+            indexName: idx_customer_last_name
+            columns:
+              - column:
+                  name: last_name
+        # Individual index on first_name for first name searches
+        - createIndex:
+            tableName: customer
+            indexName: idx_customer_first_name
+            columns:
+              - column:
+                  name: first_name
+        # Composite index on last_name, first_name for full name lookups
+        - createIndex:
+            tableName: customer
+            indexName: idx_customer_last_first_name
+            columns:
+              - column:
+                  name: last_name
+              - column:
+                  name: first_name
+        # Composite index on first_name, last_name for full name lookups in reverse order
+        - createIndex:
+            tableName: customer
+            indexName: idx_customer_first_last_name
+            columns:
+              - column:
+                  name: first_name
+              - column:
+                  name: last_name
