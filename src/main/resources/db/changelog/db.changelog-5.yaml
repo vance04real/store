@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: 5-add-product-table
+      author: devoninterview@securitease.com
+      comment: Add product table and order-product relationship
+      changes:
+        - createTable:
+            tableName: product
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: order_product
+            columns:
+              - column:
+                  name: order_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: order_product
+            columnNames: order_id, product_id
+            constraintName: pk_order_product
+        - addForeignKeyConstraint:
+            baseTableName: order_product
+            baseColumnNames: order_id
+            referencedTableName: "order"
+            referencedColumnNames: id
+            constraintName: fk_order_product_order
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: order_product
+            baseColumnNames: product_id
+            referencedTableName: product
+            referencedColumnNames: id
+            constraintName: fk_order_product_product
+            onDelete: CASCADE
