@@ -1,7 +1,9 @@
 package com.example.store.exeption.handler;
 
+import com.example.store.dto.response.ErrorResponse;
 import com.example.store.exeption.CustomerNotFoundException;
 import com.example.store.exeption.OrderNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,34 +24,87 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(OrderNotFoundException.class)
-    public ResponseEntity<String> handleOrderNotFound(OrderNotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleOrderNotFound(
+            OrderNotFoundException ex, HttpServletRequest request) {
         log.error("Order not found", ex);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+
+        ErrorResponse errorResponse = ErrorResponse.of(
+                ex.getMessage(),
+                request.getRequestURI(),
+                404
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
     @ExceptionHandler(CustomerNotFoundException.class)
-    public ResponseEntity<String> handleCustomerNotFound(CustomerNotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleCustomerNotFound(
+            CustomerNotFoundException ex, HttpServletRequest request) {
         log.error("Customer not found", ex);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+
+        ErrorResponse errorResponse = ErrorResponse.of(
+                ex.getMessage(),
+                request.getRequestURI(),
+                404
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
     @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<String> handleProductNotFound(ProductNotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleProductNotFound(
+            ProductNotFoundException ex, HttpServletRequest request) {
         log.error("Product not found", ex);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+
+        ErrorResponse errorResponse = ErrorResponse.of(
+                ex.getMessage(),
+                request.getRequestURI(),
+                404
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+            IllegalArgumentException ex, HttpServletRequest request) {
+        log.error("Invalid argument", ex);
+
+        ErrorResponse errorResponse = ErrorResponse.of(
+                ex.getMessage(),
+                request.getRequestURI(),
+                400
+        );
+
+        return ResponseEntity.badRequest().body(errorResponse);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<String> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex, HttpServletRequest request) {
         log.error("Data integrity violation", ex);
-        return ResponseEntity.badRequest().body("Record with similar data already exists");
+
+        ErrorResponse errorResponse = ErrorResponse.of(
+                "Record with similar data already exists",
+                request.getRequestURI(),
+                400
+        );
+
+        return ResponseEntity.badRequest().body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleGlobalException(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleGlobalException(
+            Exception ex, HttpServletRequest request) {
         log.error("Unexpected error", ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Sorry, something went wrong");
+
+        ErrorResponse errorResponse = ErrorResponse.of(
+                "Sorry, something went wrong",
+                request.getRequestURI(),
+                500
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
     @Override
@@ -65,6 +120,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
 
-        return ResponseEntity.badRequest().body("Validation failed: " + message);
+        String path = request.getDescription(false).replace("uri=", "");
+
+        ErrorResponse errorResponse = ErrorResponse.of(
+                "Validation failed: " + message,
+                path,
+                400
+        );
+
+        return ResponseEntity.badRequest().body(errorResponse);
     }
 }
