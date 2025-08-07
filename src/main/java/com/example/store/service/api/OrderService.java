@@ -1,7 +1,8 @@
 package com.example.store.service.api;
 
 import com.example.store.model.OrderDTO;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface OrderService {
     
@@ -10,7 +11,7 @@ public interface OrderService {
      *
      * @return a list of all orders as DTOs
      */
-    List<OrderDTO> getAllOrders();
+    Page<OrderDTO> getAllOrders(Pageable pageable);
     
     /**
      * Creates a new order.
@@ -19,4 +20,6 @@ public interface OrderService {
      * @return the created order as DTO
      */
     OrderDTO createOrder(OrderDTO orderDTO);
+
+    OrderDTO getOrderById(Long id);
 }
