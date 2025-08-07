@@ -17,22 +17,27 @@ servers:
 paths:
   /orders:
     get:
-      summary: Get Orders
+      summary: Get Orders (Paginated)
       tags:
         - store
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/OrderDTO'
+                  $ref: '#/components/schemas/PaginatedOrderResponse'
+        '400':
+          description: Bad Request - Invalid pagination parameters
         '500':
           description: Internal server error
       operationId: getOrders
-      description: Get all orders
+      description: Get all orders with pagination and sorting
     post:
       summary: Create Order
       tags:
@@ -86,22 +91,27 @@ paths:
       description: Get a specific order by its ID
   /customers:
     get:
-      summary: Get Customers
+      summary: Get Customers (Paginated)
       tags:
         - store
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CustomerDTO'
+                  $ref: '#/components/schemas/PaginatedCustomerResponse'
+        '400':
+          description: Bad request - Invalid pagination parameters
         '500':
           description: Internal server error
       operationId: getCustomers
-      description: Get all customers
+      description: Get all customers with pagination and sorting
     post:
       summary: Create Customer
       tags:
@@ -139,36 +149,44 @@ paths:
             minLength: 1
             maxLength: 100
           description: Search query to match against customer names
-          example: "john"
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CustomerDTO'
+                  $ref: '#/components/schemas/PaginatedCustomerResponse'
         '400':
           description: Bad Request - Missing or invalid query parameter
         '500':
           description: Internal server error
       operationId: searchCustomers
-      description: Search customers by matching substring against first name, last name, or title
+      description: Search customers by matching substring against first name, last name, or title paginated and sorted
   /products:
     get:
       summary: Get Products
       tags:
         - store
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ProductDTO'
+                  $ref: '#/components/schemas/PaginatedProductResponse'
+        '401':
+          description: Bad Request - Invalid pagination parameters
+        '500':
+          description: Internal server error
       operationId: getProducts
       description: Get all products
     post:
@@ -194,13 +212,159 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ProductDTO'
+  /products/{id}:
+    get:
+      summary: Get Product by ID
+      tags:
+        - store
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Product ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDTO'
+        '404':
+          description: Product not found
+        '500':
+          description: Internal server error
+      operationId: getProductById
+      description: Get a specific product by its ID
 
 components:
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      description: Page number (0-based)
+      example: 0
+
+    SizeParam:
+      name: size
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: Number of items per page
+      example: 20
+
+    SortParam:
+      name: sort
+      in: query
+      required: false
+      schema:
+        type: string
+        default: "id"
+      description: Field to sort by
+      example: "firstName"
+
+    DirectionParam:
+      name: direction
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [ ASC, DESC ]
+        default: "ASC"
+      description: Sort direction
+      example: "ASC"
+
   schemas:
+    PaginatedCustomerResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerDTO'
+        hasPages:
+          type: boolean
+          description: Whether there are multiple pages
+        currentPage:
+          type: integer
+          description: Current page number (0-based)
+        totalPages:
+          type: integer
+          description: Total number of pages
+        totalItems:
+          type: integer
+          format: int64
+          description: Total number of items across all pages
+      required:
+        - data
+        - hasPages
+        - currentPage
+        - totalPages
+        - totalItems
+
+    PaginatedOrderResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderDTO'
+        hasPages:
+          type: boolean
+        currentPage:
+          type: integer
+        totalPages:
+          type: integer
+        totalItems:
+          type: integer
+          format: int64
+      required:
+        - data
+        - hasPages
+        - currentPage
+        - totalPages
+        - totalItems
+
+    PaginatedProductResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductDTO'
+        hasPages:
+          type: boolean
+        currentPage:
+          type: integer
+        totalPages:
+          type: integer
+        totalItems:
+          type: integer
+          format: int64
+      required:
+        - data
+        - hasPages
+        - currentPage
+        - totalPages
+        - totalItems
+
     OrderDTO:
       type: object
       required:
         - description
+        - customerId
+        - productIds
       properties:
         id:
           type: integer
@@ -210,11 +374,13 @@ components:
           type: string
           minLength: 1
           maxLength: 500
+          pattern: "^\\S.*\\S$"
         customer:
           $ref: '#/components/schemas/OrderCustomerDTO'
         customerId:
           type: integer
           format: int64
+          minimum: 1
           writeOnly: true
           description: ID of the customer placing the order
         productIds:
@@ -222,8 +388,11 @@ components:
           items:
             type: integer
             format: int64
+            minimum: 1
           writeOnly: true
           minItems: 1
+          maxItems: 50
+          uniqueItems: true
           description: List of product IDs to include in the order
         products:
           type: array
@@ -255,6 +424,9 @@ components:
 
     CustomerDTO:
       type: object
+      required:
+        - firstName
+        - lastName
       properties:
         id:
           type: integer
@@ -262,12 +434,16 @@ components:
           readOnly: true
         title:
           type: string
+          maxLength: 10
         firstName:
           type: string
+          minLength: 1
+          maxLength: 50
         lastName:
           type: string
         suffix:
           type: string
+          maxLength: 10
         orders:
           type: array
           items:
@@ -293,6 +469,9 @@ components:
           readOnly: true
         description:
           type: string
+          minLength: 1
+          maxLength: 500
+          pattern: "^\\S.*\\S$"
         orders:
           type: array
           items:
