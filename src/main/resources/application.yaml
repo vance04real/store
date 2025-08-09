@@ -20,6 +20,9 @@ spring:
         default_batch_fetch_size: 10
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+  messages:
+    basename: messages
+    encoding: UTF-8
 
 store:
   cache:
