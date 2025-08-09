@@ -26,6 +26,7 @@ import java.net.URI;
 public class ProductController implements ProductsApi {
 
     private final ProductService productService;
+    private final PaginationUtils paginationUtils;
 
     @Override
     @PostMapping
@@ -55,7 +56,7 @@ public class ProductController implements ProductsApi {
 
         log.debug("Getting products - page: {}, size: {}, sort: {}, direction: {}", page, size, sort, direction);
 
-        var pageable = PaginationUtils.createPageable(page, size, sort, direction);
+        var pageable = paginationUtils.createPageable(page, size, sort, direction);
 
         Page<ProductDTO> productsPage = productService.getAllProducts(pageable);
 

@@ -1,4 +1,4 @@
-package com.example.store.exeption.handler;
+package com.example.store.exception.handler;
 
 public class ProductNotFoundException extends RuntimeException {
 

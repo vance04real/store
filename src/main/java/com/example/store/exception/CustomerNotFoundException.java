@@ -1,4 +1,4 @@
-package com.example.store.exeption;
+package com.example.store.exception;
 
 public class CustomerNotFoundException extends RuntimeException {
 

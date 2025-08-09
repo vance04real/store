@@ -1,11 +1,15 @@
-package com.example.store.exeption.handler;
+package com.example.store.exception.handler;
 
-import com.example.store.dto.response.ErrorResponse;
-import com.example.store.exeption.CustomerNotFoundException;
-import com.example.store.exeption.OrderNotFoundException;
+import com.example.store.payload.response.ErrorResponse;
+import com.example.store.exception.CustomerNotFoundException;
+import com.example.store.exception.OrderNotFoundException;
+import com.example.store.i18n.MessageKeys;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,9 +23,13 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.util.stream.Collectors;
 
-@RestControllerAdvice
+
 @Slf4j
+@RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    private final MessageSource messageSource;
 
     @ExceptionHandler(OrderNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleOrderNotFound(
@@ -84,8 +92,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             DataIntegrityViolationException ex, HttpServletRequest request) {
         log.error("Data integrity violation", ex);
 
+        String message = messageSource.getMessage(
+                MessageKeys.ERROR.DATA_INTEGRITY_DUPLICATE,
+                null,
+                LocaleContextHolder.getLocale());
+
         ErrorResponse errorResponse = ErrorResponse.of(
-                "Record with similar data already exists",
+                message,
                 request.getRequestURI(),
                 400
         );
@@ -98,8 +111,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             Exception ex, HttpServletRequest request) {
         log.error("Unexpected error", ex);
 
+        String message = messageSource.getMessage(
+                MessageKeys.ERROR.UNEXPECTED,
+                null,
+                LocaleContextHolder.getLocale());
+
         ErrorResponse errorResponse = ErrorResponse.of(
-                "Sorry, something went wrong",
+                message,
                 request.getRequestURI(),
                 500
         );
@@ -116,14 +134,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             @NotNull WebRequest request) {
 
         log.error("Validation failed", ex);
-        String message = ex.getBindingResult().getFieldErrors().stream()
+        String details = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
 
         String path = request.getDescription(false).replace("uri=", "");
 
+        String message = messageSource.getMessage(
+                MessageKeys.ERROR.VALIDATION_FAILED,
+                new Object[]{details},
+                LocaleContextHolder.getLocale());
+
         ErrorResponse errorResponse = ErrorResponse.of(
-                "Validation failed: " + message,
+                message,
                 path,
                 400
         );

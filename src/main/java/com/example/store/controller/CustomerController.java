@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CustomerController implements CustomersApi {
 
     private final CustomerService customerService;
+    private final PaginationUtils paginationUtils;
 
     @Override
     @PostMapping
@@ -49,7 +50,7 @@ public class CustomerController implements CustomersApi {
                                                                   @RequestParam(defaultValue = "ASC") String direction) {
         log.debug("Getting customers - page: {}, size: {}, sort: {}, direction: {}", page, size, sort, direction);
 
-        var pageable = PaginationUtils.createPageable(page, size, sort, direction);
+        var pageable = paginationUtils.createPageable(page, size, sort, direction);
 
         var customersPage = customerService.getAllCustomers(pageable);
 
@@ -67,7 +68,7 @@ public class CustomerController implements CustomersApi {
                                                                      @RequestParam(defaultValue = "ASC") String direction) {
         log.debug("Searching customers with term '{}' - page: {}, size: {}", searchTerm, page, size);
 
-        var pageable = PaginationUtils.createPageable(page, size, sort, direction);
+        var pageable = paginationUtils.createPageable(page, size, sort, direction);
 
         var customersPage = customerService.searchCustomers(searchTerm, pageable);
 

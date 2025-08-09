@@ -30,6 +30,7 @@ import java.net.URI;
 public class OrderController implements OrdersApi {
 
     private final OrderService orderService;
+    private final PaginationUtils paginationUtils;
 
     @PostMapping
     @Override
@@ -60,7 +61,7 @@ public class OrderController implements OrdersApi {
                                                             @RequestParam(defaultValue = "ASC") String direction) {
         log.debug("Getting orders - page: {}, size: {}, sort: {}, direction: {}", page, size, sort, direction);
 
-        var pageable = PaginationUtils.createPageable(page, size, sort, direction);
+        var pageable = paginationUtils.createPageable(page, size, sort, direction);
 
         Page<OrderDTO> ordersPage = orderService.getAllOrders(pageable);
 

@@ -1,4 +1,4 @@
-package com.example.store.dto.response;
+package com.example.store.payload.response;
 
 import java.time.Instant;
 

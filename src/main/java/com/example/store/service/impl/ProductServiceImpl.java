@@ -2,7 +2,8 @@ package com.example.store.service.impl;
 
 import com.example.store.config.CacheConfig;
 import com.example.store.entity.Product;
-import com.example.store.exeption.handler.ProductNotFoundException;
+import com.example.store.exception.handler.ProductNotFoundException;
+import com.example.store.i18n.MessageKeys;
 import com.example.store.model.ProductDTO;
 import com.example.store.mapper.ProductMapper;
 import com.example.store.repository.ProductRepository;
@@ -14,12 +15,11 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-
 
 @Slf4j
 @Service
@@ -28,6 +28,7 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+    private final MessageSource messageSource;
 
     @Override
     @Cacheable(value = CacheConfig.PRODUCTS_CACHE, key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
@@ -43,7 +44,13 @@ public class ProductServiceImpl implements ProductService {
         log.debug("Fetching product {} from database (cache miss)", id);
         return productRepository.findById(id)
                 .map(productMapper::productToProductDTO)
-                .orElseThrow(() -> new ProductNotFoundException(id));
+                .orElseThrow(() -> {
+                    String msg = messageSource.getMessage(
+                            MessageKeys.PRODUCT.NOT_FOUND,
+                            new Object[]{id},
+                            LocaleContextHolder.getLocale());
+                    return new ProductNotFoundException(msg);
+                });
     }
 
     @Override
@@ -61,7 +68,11 @@ public class ProductServiceImpl implements ProductService {
 
     private void validateProductCreation(ProductDTO productDTO) {
         if (productDTO.getDescription() == null || productDTO.getDescription().trim().isEmpty()) {
-            throw new IllegalArgumentException("Product description is required");
+            String msg = messageSource.getMessage(
+                    MessageKeys.PRODUCT.DESCRIPTION_REQUIRED,
+                    null,
+                    LocaleContextHolder.getLocale());
+            throw new IllegalArgumentException(msg);
         }
     }
 }
