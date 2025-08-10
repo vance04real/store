@@ -180,6 +180,7 @@ jobs:
             type=ref,event=branch
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ github.sha }}
 
       # STEP 5: Build and push Docker image
       - name: Build and push Docker image
