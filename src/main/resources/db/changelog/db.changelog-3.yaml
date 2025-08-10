@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 3-update-customer-schema
+      id: 3-update-customer-schema-smart
       author: developer@securitease.com
       changes:
         - addColumn:
@@ -8,7 +8,7 @@ databaseChangeLog:
             columns:
               - column:
                   name: title
-                  type: VARCHAR(255)
+                  type: VARCHAR(10)
               - column:
                   name: first_name
                   type: VARCHAR(255)
@@ -17,25 +17,61 @@ databaseChangeLog:
                   type: VARCHAR(255)
               - column:
                   name: suffix
-                  type: VARCHAR(255)
+                  type: VARCHAR(10)
+
+        # Smart parsing of existing names
         - sql:
-            sql: >
-              UPDATE customer
-              SET first_name = SUBSTRING(name FROM 1 FOR POSITION(' ' IN name) - 1),
-                  last_name = SUBSTRING(name FROM POSITION(' ' IN name) + 1)
-              WHERE POSITION(' ' IN name) > 0;
+            sql: |
+              -- Extract title
+              UPDATE customer 
+              SET title = CASE 
+                WHEN name LIKE 'Mr. %' THEN 'Mr.'
+                WHEN name LIKE 'Mrs. %' THEN 'Mrs.'
+                WHEN name LIKE 'Ms. %' THEN 'Ms.'
+                WHEN name LIKE 'Dr. %' THEN 'Dr.'
+                WHEN name LIKE 'Prof. %' THEN 'Prof.'
+                ELSE NULL
+              END;
               
+              -- Extract suffix  
               UPDATE customer
-              SET first_name = name,
-                  last_name = name
-              WHERE POSITION(' ' IN name) = 0;
+              SET suffix = CASE
+                WHEN name LIKE '% Jr.' THEN 'Jr.'
+                WHEN name LIKE '% Sr.' THEN 'Sr.'
+                WHEN name LIKE '% III' THEN 'III'
+                WHEN name LIKE '% IV' THEN 'IV'
+                WHEN name LIKE '% II' THEN 'II'
+                ELSE NULL
+              END;
+              
+              -- Extract first and last names (simplified)
+              UPDATE customer
+              SET 
+                first_name = CASE
+                  WHEN title IS NOT NULL THEN 
+                    SPLIT_PART(TRIM(SUBSTRING(name FROM LENGTH(title) + 2)), ' ', 1)
+                  ELSE 
+                    SPLIT_PART(name, ' ', 1)
+                END,
+                last_name = CASE
+                  WHEN title IS NOT NULL THEN
+                    TRIM(REPLACE(REPLACE(SUBSTRING(name FROM LENGTH(title) + 2), SPLIT_PART(TRIM(SUBSTRING(name FROM LENGTH(title) + 2)), ' ', 1), ''), COALESCE(suffix, ''), ''))
+                  ELSE
+                    TRIM(REPLACE(REPLACE(SUBSTRING(name FROM POSITION(' ' IN name) + 1), COALESCE(suffix, ''), ''), '  ', ' '))
+                END;
+              
+              -- Clean up empty strings
+              UPDATE customer SET last_name = first_name WHERE last_name = '' OR last_name IS NULL;
+
         - dropColumn:
             tableName: customer
             columnName: name
+
         - addNotNullConstraint:
             tableName: customer
             columnName: first_name
             columnDataType: VARCHAR(255)
+
         - addNotNullConstraint:
             tableName: customer
             columnName: last_name
