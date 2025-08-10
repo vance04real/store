@@ -197,9 +197,12 @@ jobs:
       - name: Test Docker image
         run: |
           echo "Testing Docker image..."
-          docker pull $(echo "${{ steps.meta.outputs.tags }}" | cut -d',' -f1)
+          # Test that image was built and pushed successfully
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           echo "Docker image pulled successfully!"
-          docker inspect $(echo "${{ steps.meta.outputs.tags }}" | cut -d',' -f1)
+          
+          # Basic image inspection
+          docker inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           echo "Docker image inspection completed!"
 
   # JOB 3: SECURITY SCAN
