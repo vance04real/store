@@ -19,10 +19,10 @@ jobs:
   # JOB 1: BUILD AND TEST
   # ====================
   build-and-test:
-    name: 🔨 Build & Test Store Application
+    name: Build & Test Store Application
     runs-on: ubuntu-latest
 
-    # Start PostgreSQL for testing
+    # Start PostgresSQL for testing
     services:
       postgres:
         image: postgres:16.2
@@ -40,18 +40,18 @@ jobs:
 
     steps:
       # STEP 1: Get your code
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       # STEP 2: Install Java
-      - name: ☕ Set up JDK ${{ env.JAVA_VERSION }}
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
 
       # STEP 3: Cache Gradle (speeds up builds)
-      - name: 💾 Cache Gradle packages
+      - name: Cache Gradle packages
         uses: actions/cache@v4
         with:
           path: |
@@ -61,48 +61,69 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle-
 
       # STEP 4: Make gradlew executable
-      - name: 🔧 Make gradlew executable
+      - name: Make gradlew executable
         run: chmod +x gradlew
 
-      # STEP 5: Generate OpenAPI classes (CRUCIAL!)
-      - name: 🏗️ Generate OpenAPI classes
+      # STEP 5: Download dependencies first (prevents conflicts)
+      - name: Download dependencies
         run: |
-          echo "🔧 Generating OpenAPI classes..."
+          echo "Downloading Gradle dependencies..."
+          ./gradlew dependencies --configuration compileClasspath
+          echo "Dependencies downloaded successfully"
+
+      # STEP 6: Clean build directory
+      - name: Clean build directory
+        run: ./gradlew clean
+
+      # STEP 7: Generate OpenAPI classes (CRUCIAL!)
+      - name: Generate OpenAPI classes
+        run: |
+          echo "Generating OpenAPI classes..."
           ./gradlew openApiGenerate
           echo "OpenAPI classes generated successfully"
-          ls -la build/generated/src/main/java/com/example/store/
+          ls -la build/generated/src/main/java/com/example/store/ || echo "Generated directory not found"
 
-      # STEP 6: Check code formatting
+      # STEP 8: Verify compilation before full build
+      - name: Verify compilation
+        run: |
+          echo "Verifying code compiles..."
+          ./gradlew compileJava --info
+          echo "Compilation verification complete"
+
+      # STEP 9: Check code formatting
       - name: Check code formatting
-        run: ./gradlew spotlessCheck
-        continue-on-error: true  # Don't fail build for formatting
+        run: |
+          echo "Checking code formatting..."
+          ./gradlew spotlessCheck
+          echo "Code formatting verified!"
 
-      # STEP 7: Build application
+      # STEP 10: Build application with explicit task ordering
       - name: Build application
         run: |
           echo "Building application..."
-          ./gradlew build -x test
+          # Force explicit task ordering to avoid dependency issues
+          ./gradlew openApiGenerate compileJava processResources classes bootJar --info
           echo "Application built successfully"
           ls -la build/libs/
 
-      # STEP 8: Run tests with database
+      # STEP 11: Run tests with database
       - name: Run tests
         run: |
           echo "Running tests with PostgreSQL database..."
-          ./gradlew test
+          ./gradlew test --info
           echo "All tests passed!"
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/store
           SPRING_DATASOURCE_USERNAME: admin
           SPRING_DATASOURCE_PASSWORD: admin
 
-      # STEP 9: Generate test coverage
+      # STEP 12: Generate test coverage
       - name: Generate test coverage report
         run: |
           ./gradlew jacocoTestReport
           echo "Coverage report generated"
 
-      # STEP 10: Upload test results
+      # STEP 13: Upload test results
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
@@ -113,7 +134,7 @@ jobs:
             build/reports/jacoco/
           retention-days: 30
 
-      # STEP 11: Upload JAR artifact
+      # STEP 14: Upload JAR artifact
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
@@ -161,7 +182,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       # STEP 5: Build and push Docker image
-      - name: 🔨 Build and push Docker image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -176,11 +197,11 @@ jobs:
         run: |
           echo "Testing Docker image..."
           # Test that image was built and pushed successfully
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           echo "Docker image pulled successfully!"
           
           # Basic image inspection
-          docker inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          docker inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           echo "Docker image inspection completed!"
 
   # JOB 3: SECURITY SCAN
@@ -217,7 +238,7 @@ jobs:
       - name: Display build summary
         run: |
           echo "BUILD SUMMARY"
-          echo "==============="
+          echo "================"
           echo "Tests: ${{ needs.build-and-test.result }}"
           echo "Docker: ${{ needs.build-docker.result }}"
           echo "Security: ${{ needs.security-scan.result }}"
@@ -225,3 +246,16 @@ jobs:
           echo "Pipeline completed for interview demo!"
           echo "Docker image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
           echo "View results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          # Display overall status
+          if [[ "${{ needs.build-and-test.result }}" == "success" ]]; then
+            echo "Build and tests PASSED!"
+          else
+            echo "Build and tests FAILED!"
+          fi
+          
+          if [[ "${{ needs.build-docker.result }}" == "success" ]]; then
+            echo "Docker build PASSED!"
+          else
+            echo "Docker build FAILED!"
+          fi
