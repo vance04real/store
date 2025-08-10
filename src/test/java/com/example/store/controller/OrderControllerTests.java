@@ -82,7 +82,8 @@ class OrderControllerTests {
         Page<OrderDTO> page = new PageImpl<>(List.of(orderDTO));
         Pageable pageable = PageRequest.of(0, 20);
 
-        when(paginationUtils.createPageable(any(Integer.class), any(Integer.class), any(String.class), any(String.class)))
+        when(paginationUtils.createPageable(
+                        any(Integer.class), any(Integer.class), any(String.class), any(String.class)))
                 .thenReturn(pageable);
         when(orderService.getAllOrders(any(Pageable.class))).thenReturn(page);
 
