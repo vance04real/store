@@ -1,3 +1,5 @@
+import com.diffplug.gradle.spotless.SpotlessTask
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.2'
@@ -23,6 +25,8 @@ repositories {
 
 spotless {
     java {
+        target 'src/**/*.java'
+        targetExclude 'build/generated/**/*.java'
         palantirJavaFormat('2.50.0')
                 .style('PALANTIR')
                 .formatJavadoc(true)
@@ -106,6 +110,10 @@ openApiGenerate {
             interfaceOnly: "true",
             skipDefaultInterface: "true",
     ]
+}
+
+tasks.withType(SpotlessTask).configureEach {
+    dependsOn tasks.openApiGenerate
 }
 
 compileJava.dependsOn tasks.openApiGenerate

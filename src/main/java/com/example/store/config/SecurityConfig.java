@@ -1,10 +1,11 @@
 package com.example.store.config;
 
-
 import com.example.store.payload.response.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -22,9 +23,8 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Security configuration for the Store API - This demo is just for Interview
- * Implements Basic Authentication with in-memory users.
- * Production note: Replace with database/LDAP/OAuth2 authentication.
+ * Security configuration for the Store API - This demo is just for Interview Implements Basic Authentication with
+ * in-memory users. Production note: Replace with database/LDAP/OAuth2 authentication.
  */
 @Slf4j
 @Configuration
@@ -38,15 +38,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         log.info("Configuring HTTP Basic Authentication");
 
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health").permitAll()
-                        .anyRequest().authenticated())
-                .httpBasic(httpBasic ->
-                        httpBasic.authenticationEntryPoint(customAuthenticationEntryPoint()))
+        http.csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/health")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
+                .httpBasic(httpBasic -> httpBasic.authenticationEntryPoint(customAuthenticationEntryPoint()))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable);
 
@@ -86,8 +84,11 @@ public class SecurityConfig {
     @Bean
     public AuthenticationEntryPoint customAuthenticationEntryPoint() {
         return (request, response, authException) -> {
-            log.warn("Authentication failed for {} {}: {}",
-                    request.getMethod(), request.getRequestURI(), authException.getMessage());
+            log.warn(
+                    "Authentication failed for {} {}: {}",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    authException.getMessage());
 
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.setContentType("application/json");
@@ -96,8 +97,7 @@ public class SecurityConfig {
             ErrorResponse errorResponse = ErrorResponse.of(
                     "Full authentication is required to access this resource",
                     request.getRequestURI(),
-                    HttpStatus.UNAUTHORIZED.value()
-            );
+                    HttpStatus.UNAUTHORIZED.value());
 
             try {
                 String jsonResponse = objectMapper.writeValueAsString(errorResponse);
@@ -110,8 +110,7 @@ public class SecurityConfig {
                         "Authentication required",
                         java.time.Instant.now().toString(),
                         request.getRequestURI(),
-                        HttpStatus.UNAUTHORIZED.value()
-                );
+                        HttpStatus.UNAUTHORIZED.value());
                 response.getWriter().write(fallbackJson);
             }
         };

@@ -1,12 +1,13 @@
 package com.example.store.service;
 
+import com.example.store.entity.Product;
 import com.example.store.exception.handler.ProductNotFoundException;
 import com.example.store.i18n.MessageKeys;
 import com.example.store.mapper.ProductMapper;
 import com.example.store.model.ProductDTO;
-import com.example.store.entity.Product;
 import com.example.store.repository.ProductRepository;
 import com.example.store.service.impl.ProductServiceImpl;
+
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -100,8 +101,7 @@ class ProductServiceImplTest {
         Long id = null;
 
         // Act + Assert
-        assertThatThrownBy(() -> service.getProductById(id))
-                .isInstanceOf(RuntimeException.class); // NPE or similar
+        assertThatThrownBy(() -> service.getProductById(id)).isInstanceOf(RuntimeException.class); // NPE or similar
         verifyNoInteractions(productMapper);
     }
 
@@ -110,8 +110,10 @@ class ProductServiceImplTest {
     void getAllProducts_shouldMapEntitiesToDtos_andCallMapperForEach() {
         // Arrange
         Pageable pageable = PageRequest.of(0, 2, Sort.by("id"));
-        Product p1 = new Product(); p1.setId(1L);
-        Product p2 = new Product(); p2.setId(2L);
+        Product p1 = new Product();
+        p1.setId(1L);
+        Product p2 = new Product();
+        p2.setId(2L);
         when(productRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(p1, p2), pageable, 2));
         ProductDTO d1 = mock(ProductDTO.class);
         ProductDTO d2 = mock(ProductDTO.class);

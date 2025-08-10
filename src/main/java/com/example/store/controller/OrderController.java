@@ -6,6 +6,9 @@ import com.example.store.model.PaginatedOrderResponse;
 import com.example.store.service.api.OrderService;
 import com.example.store.utils.PaginationUtils;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,11 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import jakarta.validation.Valid;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 
@@ -34,8 +32,9 @@ public class OrderController implements OrdersApi {
 
     @PostMapping
     @Override
-    public ResponseEntity<OrderDTO> createOrder(@RequestBody @Valid OrderDTO orderDTO) {
-        log.info("Creating order for customer {} with {} products: {}",
+    public ResponseEntity<OrderDTO> createOrder(@RequestBody OrderDTO orderDTO) {
+        log.info(
+                "Creating order for customer {} with {} products: {}",
                 orderDTO.getCustomerId(),
                 orderDTO.getProductIds() != null ? orderDTO.getProductIds().size() : 0,
                 orderDTO.getProductIds());
@@ -55,10 +54,11 @@ public class OrderController implements OrdersApi {
 
     @GetMapping
     @Override
-    public ResponseEntity<PaginatedOrderResponse> getOrders(@RequestParam(defaultValue = "0") Integer page,
-                                                            @RequestParam(defaultValue = "20") Integer size,
-                                                            @RequestParam(defaultValue = "id") String sort,
-                                                            @RequestParam(defaultValue = "ASC") String direction) {
+    public ResponseEntity<PaginatedOrderResponse> getOrders(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "20") Integer size,
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(defaultValue = "ASC") String direction) {
         log.debug("Getting orders - page: {}, size: {}, sort: {}, direction: {}", page, size, sort, direction);
 
         var pageable = paginationUtils.createPageable(page, size, sort, direction);
@@ -69,5 +69,4 @@ public class OrderController implements OrdersApi {
 
         return ResponseEntity.ok(orderResponse);
     }
-
 }

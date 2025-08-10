@@ -1,21 +1,19 @@
 package com.example.store.service.api;
 
 import com.example.store.model.CustomerDTO;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-
-
 public interface CustomerService {
-    
+
     /**
      * Retrieves all customers.
      *
      * @return a list of all customers as DTOs
      */
     Page<CustomerDTO> getAllCustomers(Pageable pageable);
-    
+
     /**
      * Creates a new customer.
      *
@@ -23,7 +21,6 @@ public interface CustomerService {
      * @return the created customer as DTO
      */
     CustomerDTO createCustomer(CustomerDTO customerDTO);
-
 
     /**
      * Returns a new customer.

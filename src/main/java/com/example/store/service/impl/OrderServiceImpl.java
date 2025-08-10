@@ -8,16 +8,16 @@ import com.example.store.exception.CustomerNotFoundException;
 import com.example.store.exception.OrderNotFoundException;
 import com.example.store.exception.handler.ProductNotFoundException;
 import com.example.store.i18n.MessageKeys;
-import com.example.store.model.OrderDTO;
 import com.example.store.mapper.OrderMapper;
+import com.example.store.model.OrderDTO;
 import com.example.store.repository.CustomerRepository;
 import com.example.store.repository.OrderRepository;
-
 import com.example.store.repository.ProductRepository;
 import com.example.store.service.api.OrderService;
-import lombok.RequiredArgsConstructor;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.MessageSource;
@@ -42,20 +42,25 @@ public class OrderServiceImpl implements OrderService {
     private final MessageSource messageSource;
 
     @Override
-    @Cacheable(value = CacheConfig.ORDERS_CACHE, key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
+    @Cacheable(
+            value = CacheConfig.ORDERS_CACHE,
+            key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public Page<OrderDTO> getAllOrders(Pageable pageable) {
-        log.debug("Fetching orders page {} with size {} (cache miss)", pageable.getPageNumber(), pageable.getPageSize());
+        log.debug(
+                "Fetching orders page {} with size {} (cache miss)", pageable.getPageNumber(), pageable.getPageSize());
         Page<Order> orderPage = orderRepository.findAll(pageable);
         return orderPage.map(orderMapper::orderToOrderDTO);
     }
 
     @Override
-    @CacheEvict(value = {
-            CacheConfig.ORDERS_CACHE,
-            CacheConfig.CUSTOMERS_CACHE,
-            CacheConfig.PRODUCTS_CACHE,
-            CacheConfig.CUSTOMER_SEARCH_CACHE
-    }, allEntries = true)
+    @CacheEvict(
+            value = {
+                CacheConfig.ORDERS_CACHE,
+                CacheConfig.CUSTOMERS_CACHE,
+                CacheConfig.PRODUCTS_CACHE,
+                CacheConfig.CUSTOMER_SEARCH_CACHE
+            },
+            allEntries = true)
     public OrderDTO createOrder(OrderDTO orderDTO) {
 
         log.debug("Creating new order (will clear all related caches)");
@@ -64,11 +69,12 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = orderMapper.orderDTOToOrder(orderDTO);
 
-        Customer customer = customerRepository.findById(orderDTO.getCustomerId())
+        Customer customer = customerRepository
+                .findById(orderDTO.getCustomerId())
                 .orElseThrow(() -> {
                     String msg = messageSource.getMessage(
                             MessageKeys.CUSTOMER.NOT_FOUND,
-                            new Object[]{orderDTO.getCustomerId()},
+                            new Object[] {orderDTO.getCustomerId()},
                             LocaleContextHolder.getLocale());
                     return new CustomerNotFoundException(msg);
                 });
@@ -81,17 +87,18 @@ public class OrderServiceImpl implements OrderService {
                     .filter(id -> !foundIds.contains(id))
                     .toList();
             String msg = messageSource.getMessage(
-                    MessageKeys.PRODUCT.MULTIPLE_NOT_FOUND,
-                    new Object[]{missingIds},
-                    LocaleContextHolder.getLocale());
+                    MessageKeys.PRODUCT.MULTIPLE_NOT_FOUND, new Object[] {missingIds}, LocaleContextHolder.getLocale());
             throw new ProductNotFoundException(msg);
         }
         order.setProducts(products);
         log.debug("Added {} products to order", products.size());
 
         Order savedOrder = orderRepository.save(order);
-        log.info("Order created successfully - ID: {}, Customer: {}, Products: {}",
-                savedOrder.getId(), savedOrder.getCustomer().getId(), savedOrder.getProducts().size());
+        log.info(
+                "Order created successfully - ID: {}, Customer: {}, Products: {}",
+                savedOrder.getId(),
+                savedOrder.getCustomer().getId(),
+                savedOrder.getProducts().size());
 
         return orderMapper.orderToOrderDTO(savedOrder);
     }
@@ -101,53 +108,44 @@ public class OrderServiceImpl implements OrderService {
     public OrderDTO getOrderById(Long id) {
         log.debug("Fetching order with ID: {}", id);
 
-        return orderRepository.findById(id)
-                .map(orderMapper::orderToOrderDTO)
-                .orElseThrow(() -> {
-                    String msg = messageSource.getMessage(
-                            MessageKeys.ORDER.NOT_FOUND,
-                            new Object[]{id},
-                            LocaleContextHolder.getLocale());
-                    return new OrderNotFoundException(msg);
-                });
+        return orderRepository.findById(id).map(orderMapper::orderToOrderDTO).orElseThrow(() -> {
+            String msg = messageSource.getMessage(
+                    MessageKeys.ORDER.NOT_FOUND, new Object[] {id}, LocaleContextHolder.getLocale());
+            return new OrderNotFoundException(msg);
+        });
     }
 
     private void validateOrderCreation(OrderDTO orderDTO) {
 
-        if (orderDTO.getDescription() == null || orderDTO.getDescription().trim().isEmpty()) {
+        if (orderDTO.getDescription() == null
+                || orderDTO.getDescription().trim().isEmpty()) {
             String msg = messageSource.getMessage(
-                    MessageKeys.ORDER.DESCRIPTION_REQUIRED,
-                    null,
-                    LocaleContextHolder.getLocale());
+                    MessageKeys.ORDER.DESCRIPTION_REQUIRED, null, LocaleContextHolder.getLocale());
             throw new IllegalArgumentException(msg);
         }
 
         if (orderDTO.getCustomerId() == null) {
             String msg = messageSource.getMessage(
-                    MessageKeys.ORDER.CUSTOMER_ID_REQUIRED,
-                    null,
-                    LocaleContextHolder.getLocale());
+                    MessageKeys.ORDER.CUSTOMER_ID_REQUIRED, null, LocaleContextHolder.getLocale());
             throw new IllegalArgumentException(msg);
         }
 
         if (orderDTO.getProductIds() == null || orderDTO.getProductIds().isEmpty()) {
             String msg = messageSource.getMessage(
-                    MessageKeys.ORDER.PRODUCTS_REQUIRED,
-                    null,
-                    LocaleContextHolder.getLocale());
+                    MessageKeys.ORDER.PRODUCTS_REQUIRED, null, LocaleContextHolder.getLocale());
             throw new IllegalArgumentException(msg);
         }
 
         long uniqueProductCount = orderDTO.getProductIds().stream().distinct().count();
         if (uniqueProductCount != orderDTO.getProductIds().size()) {
             String msg = messageSource.getMessage(
-                    MessageKeys.ORDER.PRODUCTS_DUPLICATE,
-                    null,
-                    LocaleContextHolder.getLocale());
+                    MessageKeys.ORDER.PRODUCTS_DUPLICATE, null, LocaleContextHolder.getLocale());
             throw new IllegalArgumentException(msg);
         }
 
-        log.debug("Order validation passed - Customer: {}, Products: {}",
-                orderDTO.getCustomerId(), orderDTO.getProductIds().size());
+        log.debug(
+                "Order validation passed - Customer: {}, Products: {}",
+                orderDTO.getCustomerId(),
+                orderDTO.getProductIds().size());
     }
 }

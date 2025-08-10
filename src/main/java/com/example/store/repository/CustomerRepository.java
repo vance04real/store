@@ -16,17 +16,13 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     @Override
     @EntityGraph(attributePaths = {"orders"})
-    @NonNull
-    Page<Customer> findAll(@NonNull Pageable pageable);
+    @NonNull Page<Customer> findAll(@NonNull Pageable pageable);
 
     @Override
     @EntityGraph(attributePaths = {"orders"})
-    @NonNull
-    Optional<Customer> findById(@NonNull Long id);
+    @NonNull Optional<Customer> findById(@NonNull Long id);
 
-    @Query("SELECT c FROM Customer c WHERE " +
-            "LOWER(c.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            "LOWER(c.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+    @Query("SELECT c FROM Customer c WHERE " + "LOWER(c.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR "
+            + "LOWER(c.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     Page<Customer> findByNameContaining(@Param("searchTerm") String searchTerm, @NonNull Pageable pageable);
-
 }

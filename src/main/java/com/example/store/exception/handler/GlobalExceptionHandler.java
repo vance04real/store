@@ -1,13 +1,16 @@
 package com.example.store.exception.handler;
 
-import com.example.store.payload.response.ErrorResponse;
 import com.example.store.exception.CustomerNotFoundException;
 import com.example.store.exception.OrderNotFoundException;
 import com.example.store.i18n.MessageKeys;
+import com.example.store.payload.response.ErrorResponse;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,7 +26,6 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.util.stream.Collectors;
 
-
 @Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
@@ -32,15 +34,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private final MessageSource messageSource;
 
     @ExceptionHandler(OrderNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleOrderNotFound(
-            OrderNotFoundException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleOrderNotFound(OrderNotFoundException ex, HttpServletRequest request) {
         log.error("Order not found", ex);
 
-        ErrorResponse errorResponse = ErrorResponse.of(
-                ex.getMessage(),
-                request.getRequestURI(),
-                404
-        );
+        ErrorResponse errorResponse = ErrorResponse.of(ex.getMessage(), request.getRequestURI(), 404);
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
@@ -50,11 +47,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             CustomerNotFoundException ex, HttpServletRequest request) {
         log.error("Customer not found", ex);
 
-        ErrorResponse errorResponse = ErrorResponse.of(
-                ex.getMessage(),
-                request.getRequestURI(),
-                404
-        );
+        ErrorResponse errorResponse = ErrorResponse.of(ex.getMessage(), request.getRequestURI(), 404);
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
@@ -64,11 +57,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             ProductNotFoundException ex, HttpServletRequest request) {
         log.error("Product not found", ex);
 
-        ErrorResponse errorResponse = ErrorResponse.of(
-                ex.getMessage(),
-                request.getRequestURI(),
-                404
-        );
+        ErrorResponse errorResponse = ErrorResponse.of(ex.getMessage(), request.getRequestURI(), 404);
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
@@ -78,11 +67,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             IllegalArgumentException ex, HttpServletRequest request) {
         log.error("Invalid argument", ex);
 
-        ErrorResponse errorResponse = ErrorResponse.of(
-                ex.getMessage(),
-                request.getRequestURI(),
-                400
-        );
+        ErrorResponse errorResponse = ErrorResponse.of(ex.getMessage(), request.getRequestURI(), 400);
 
         return ResponseEntity.badRequest().body(errorResponse);
     }
@@ -93,34 +78,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("Data integrity violation", ex);
 
         String message = messageSource.getMessage(
-                MessageKeys.ERROR.DATA_INTEGRITY_DUPLICATE,
-                null,
-                LocaleContextHolder.getLocale());
+                MessageKeys.ERROR.DATA_INTEGRITY_DUPLICATE, null, LocaleContextHolder.getLocale());
 
-        ErrorResponse errorResponse = ErrorResponse.of(
-                message,
-                request.getRequestURI(),
-                400
-        );
+        ErrorResponse errorResponse = ErrorResponse.of(message, request.getRequestURI(), 400);
 
         return ResponseEntity.badRequest().body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(
-            Exception ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, HttpServletRequest request) {
         log.error("Unexpected error", ex);
 
-        String message = messageSource.getMessage(
-                MessageKeys.ERROR.UNEXPECTED,
-                null,
-                LocaleContextHolder.getLocale());
+        String message = messageSource.getMessage(MessageKeys.ERROR.UNEXPECTED, null, LocaleContextHolder.getLocale());
 
-        ErrorResponse errorResponse = ErrorResponse.of(
-                message,
-                request.getRequestURI(),
-                500
-        );
+        ErrorResponse errorResponse = ErrorResponse.of(message, request.getRequestURI(), 500);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
@@ -141,15 +112,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String path = request.getDescription(false).replace("uri=", "");
 
         String message = messageSource.getMessage(
-                MessageKeys.ERROR.VALIDATION_FAILED,
-                new Object[]{details},
-                LocaleContextHolder.getLocale());
+                MessageKeys.ERROR.VALIDATION_FAILED, new Object[] {details}, LocaleContextHolder.getLocale());
 
-        ErrorResponse errorResponse = ErrorResponse.of(
-                message,
-                path,
-                400
-        );
+        ErrorResponse errorResponse = ErrorResponse.of(message, path, 400);
 
         return ResponseEntity.badRequest().body(errorResponse);
     }

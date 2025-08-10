@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class PaginatedResponse<T> {
 
     /**
      * Creates a PaginatedResponse from a Spring Data Page object.
+     *
      * @param page The Page object
      * @param <T> The type of data in the page
      * @return A PaginatedResponse containing the data and pagination information

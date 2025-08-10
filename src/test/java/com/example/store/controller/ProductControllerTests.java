@@ -1,7 +1,7 @@
 package com.example.store.controller;
 
-import com.example.store.model.OrderDTO;
-import com.example.store.service.api.OrderService;
+import com.example.store.model.ProductDTO;
+import com.example.store.service.api.ProductService;
 import com.example.store.utils.PaginationUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -18,8 +18,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -27,9 +27,9 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(OrderController.class)
+@WebMvcTest(ProductController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class OrderControllerTests {
+class ProductControllerTests {
 
     @Autowired
     private MockMvc mockMvc;
@@ -38,57 +38,55 @@ class OrderControllerTests {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private OrderService orderService;
+    private ProductService productService;
 
     @MockitoBean
     private PaginationUtils paginationUtils;
 
-    private OrderDTO orderDTO;
+    private ProductDTO productDTO;
 
     @BeforeEach
     void setUp() {
-        orderDTO =
-                new OrderDTO().id(1L).description("Test Order").customerId(1L).productIds(Set.of(1L, 2L));
+        productDTO = new ProductDTO().id(1L).description("Test Product").orders(new ArrayList<>());
     }
 
     @Test
-    void testCreateOrder() throws Exception {
-        when(orderService.createOrder(any(OrderDTO.class))).thenReturn(orderDTO);
+    void testCreateProduct() throws Exception {
+        when(productService.createProduct(any(ProductDTO.class))).thenReturn(productDTO);
 
-        OrderDTO createRequest =
-                new OrderDTO().description("Test Order").customerId(1L).productIds(Set.of(1L));
+        ProductDTO createRequest = new ProductDTO().description("Test Product");
 
-        mockMvc.perform(post("/orders")
+        mockMvc.perform(post("/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/orders/1"))
-                .andExpect(jsonPath("$.description").value("Test Order"))
-                .andExpect(jsonPath("$.customerId").value(1));
+                .andExpect(header().string("Location", "/products/1"))
+                .andExpect(jsonPath("$.description").value("Test Product"));
     }
 
     @Test
-    void testGetOrderById() throws Exception {
-        when(orderService.getOrderById(anyLong())).thenReturn(orderDTO);
+    void testGetProductById() throws Exception {
+        when(productService.getProductById(anyLong())).thenReturn(productDTO);
 
-        mockMvc.perform(get("/orders/{id}", 1))
+        mockMvc.perform(get("/products/{id}", 1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.description").value("Test Order"));
+                .andExpect(jsonPath("$.description").value("Test Product"));
     }
 
     @Test
-    void testGetOrders() throws Exception {
-        Page<OrderDTO> page = new PageImpl<>(List.of(orderDTO));
+    void testGetProducts() throws Exception {
+        Page<ProductDTO> page = new PageImpl<>(List.of(productDTO));
         Pageable pageable = PageRequest.of(0, 20);
 
-        when(paginationUtils.createPageable(any(Integer.class), any(Integer.class), any(String.class), any(String.class)))
+        when(paginationUtils.createPageable(
+                        any(Integer.class), any(Integer.class), any(String.class), any(String.class)))
                 .thenReturn(pageable);
-        when(orderService.getAllOrders(any(Pageable.class))).thenReturn(page);
+        when(productService.getAllProducts(any(Pageable.class))).thenReturn(page);
 
-        mockMvc.perform(get("/orders"))
+        mockMvc.perform(get("/products"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].description").value("Test Order"))
+                .andExpect(jsonPath("$.data[0].description").value("Test Product"))
                 .andExpect(jsonPath("$.currentPage").value(0))
                 .andExpect(jsonPath("$.totalPages").value(1))
                 .andExpect(jsonPath("$.totalItems").value(1));

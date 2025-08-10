@@ -7,6 +7,7 @@ import com.example.store.mapper.CustomerMapper;
 import com.example.store.model.CustomerDTO;
 import com.example.store.repository.CustomerRepository;
 import com.example.store.service.impl.CustomerServiceImpl;
+
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -89,8 +90,7 @@ class CustomerServiceImplTest {
 
     @Test
     void getCustomerById_shouldThrow_whenIdNull() {
-        assertThatThrownBy(() -> service.getCustomerById(null))
-                .isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> service.getCustomerById(null)).isInstanceOf(RuntimeException.class);
         verifyNoInteractions(customerMapper);
     }
 
@@ -217,7 +217,8 @@ class CustomerServiceImplTest {
         Pageable pageable = PageRequest.of(0, 2);
         String term = "ja";
         Customer c1 = new Customer();
-        when(customerRepository.findByNameContaining(term, pageable)).thenReturn(new PageImpl<>(List.of(c1), pageable, 1));
+        when(customerRepository.findByNameContaining(term, pageable))
+                .thenReturn(new PageImpl<>(List.of(c1), pageable, 1));
         CustomerDTO d1 = mock(CustomerDTO.class);
         when(customerMapper.customerToCustomerDTO(c1)).thenReturn(d1);
 

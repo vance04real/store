@@ -1,27 +1,33 @@
 package com.example.store.controller;
 
-import com.example.store.entity.Customer;
-import com.example.store.mapper.CustomerMapper;
-import com.example.store.repository.CustomerRepository;
+import com.example.store.model.CustomerDTO;
+import com.example.store.service.api.CustomerService;
+import com.example.store.utils.PaginationUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CustomerController.class)
-@ComponentScan(basePackageClasses = CustomerMapper.class)
+@AutoConfigureMockMvc(addFilters = false)
 class CustomerControllerTests {
 
     @Autowired
@@ -31,35 +37,59 @@ class CustomerControllerTests {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private CustomerRepository customerRepository;
+    private CustomerService customerService;
 
-    private Customer customer;
+    @MockitoBean
+    private PaginationUtils paginationUtils;
+
+    private CustomerDTO customerDTO;
 
     @BeforeEach
     void setUp() {
-        customer = new Customer();
-        customer.setName("John Doe");
-        customer.setId(1L);
+        customerDTO = new CustomerDTO()
+                .id(1L)
+                .title("Mr.")
+                .firstName("John")
+                .lastName("Doe")
+                .suffix("Jr.");
     }
 
     @Test
     void testCreateCustomer() throws Exception {
-        when(customerRepository.save(customer)).thenReturn(customer);
+        when(customerService.createCustomer(any(CustomerDTO.class))).thenReturn(customerDTO);
 
-        mockMvc.perform(post("/customer")
+        CustomerDTO createRequest =
+                new CustomerDTO().title("Mr.").firstName("John").lastName("Doe").suffix("Jr.");
+
+        mockMvc.perform(post("/customers")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(customer)))
+                        .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("John Doe"));
+                .andExpect(header().string("Location", "/customers/1"))
+                .andExpect(jsonPath("$.title").value("Mr."))
+                .andExpect(jsonPath("$.firstName").value("John"))
+                .andExpect(jsonPath("$.lastName").value("Doe"))
+                .andExpect(jsonPath("$.suffix").value("Jr."));
     }
 
     @Test
     void testGetAllCustomers() throws Exception {
-        when(customerRepository.findAll()).thenReturn(List.of(customer));
+        Page<CustomerDTO> page = new PageImpl<>(List.of(customerDTO));
+        Pageable pageable = PageRequest.of(0, 20);
 
-        mockMvc.perform(get("/customer"))
+        when(paginationUtils.createPageable(
+                        any(Integer.class), any(Integer.class), any(String.class), any(String.class)))
+                .thenReturn(pageable);
+        when(customerService.getAllCustomers(any(Pageable.class))).thenReturn(page);
+
+        mockMvc.perform(get("/customers"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$..name").value("John Doe"));
-        ;
+                .andExpect(jsonPath("$.data[0].title").value("Mr."))
+                .andExpect(jsonPath("$.data[0].firstName").value("John"))
+                .andExpect(jsonPath("$.data[0].lastName").value("Doe"))
+                .andExpect(jsonPath("$.data[0].suffix").value("Jr."))
+                .andExpect(jsonPath("$.currentPage").value(0))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.totalItems").value(1));
     }
 }

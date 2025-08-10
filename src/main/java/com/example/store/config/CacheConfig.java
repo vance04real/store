@@ -1,7 +1,9 @@
 package com.example.store.config;
 
 import com.google.common.cache.CacheBuilder;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -40,24 +42,30 @@ public class CacheConfig {
     public CacheManager cacheManager() {
         return new ConcurrentMapCacheManager() {
             @Override
-            @NonNull
-            protected Cache createConcurrentMapCache(@NonNull String name) {
+            @NonNull protected Cache createConcurrentMapCache(@NonNull String name) {
                 log.debug("Creating cache '{}' with {}min expiration", name, cacheExpirationMinutes);
 
-                return new ConcurrentMapCache(name, CacheBuilder.newBuilder()
-                        .expireAfterWrite(cacheExpirationMinutes, TimeUnit.MINUTES)
-                        .maximumSize(1000)
-                        .recordStats()
-                        .build().asMap(), true);
+                return new ConcurrentMapCache(
+                        name,
+                        CacheBuilder.newBuilder()
+                                .expireAfterWrite(cacheExpirationMinutes, TimeUnit.MINUTES)
+                                .maximumSize(1000)
+                                .recordStats()
+                                .build()
+                                .asMap(),
+                        true);
             }
         };
     }
 
-
-    @CacheEvict(value = {CUSTOMERS_CACHE, CUSTOMER_SEARCH_CACHE, ORDERS_CACHE, PRODUCTS_CACHE}, allEntries = true)
+    @CacheEvict(
+            value = {CUSTOMERS_CACHE, CUSTOMER_SEARCH_CACHE, ORDERS_CACHE, PRODUCTS_CACHE},
+            allEntries = true)
     @Scheduled(fixedRateString = "${store.cache.eviction.interval:1800000}")
     public void evictAllCaches() {
-        log.info("Scheduled cache eviction completed - cleared all store caches (interval: {} ms)", cacheEvictionInterval);
+        log.info(
+                "Scheduled cache eviction completed - cleared all store caches (interval: {} ms)",
+                cacheEvictionInterval);
     }
 
     @CacheEvict(value = CUSTOMER_SEARCH_CACHE, allEntries = true)
@@ -65,5 +73,4 @@ public class CacheConfig {
     public void evictSearchCache() {
         log.debug("Evicting customer search cache to ensure fresh search results");
     }
-
 }

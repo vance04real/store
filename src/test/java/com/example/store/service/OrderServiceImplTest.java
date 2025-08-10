@@ -13,6 +13,7 @@ import com.example.store.repository.CustomerRepository;
 import com.example.store.repository.OrderRepository;
 import com.example.store.repository.ProductRepository;
 import com.example.store.service.impl.OrderServiceImpl;
+
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -100,8 +101,7 @@ class OrderServiceImplTest {
 
     @Test
     void getOrderById_shouldThrow_whenIdNull() {
-        assertThatThrownBy(() -> service.getOrderById(null))
-                .isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> service.getOrderById(null)).isInstanceOf(RuntimeException.class);
         verifyNoInteractions(orderMapper);
     }
 

@@ -4,17 +4,16 @@ import com.example.store.config.CacheConfig;
 import com.example.store.entity.Product;
 import com.example.store.exception.handler.ProductNotFoundException;
 import com.example.store.i18n.MessageKeys;
-import com.example.store.model.ProductDTO;
 import com.example.store.mapper.ProductMapper;
+import com.example.store.model.ProductDTO;
 import com.example.store.repository.ProductRepository;
-
 import com.example.store.service.api.ProductService;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
@@ -31,9 +30,14 @@ public class ProductServiceImpl implements ProductService {
     private final MessageSource messageSource;
 
     @Override
-    @Cacheable(value = CacheConfig.PRODUCTS_CACHE, key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
+    @Cacheable(
+            value = CacheConfig.PRODUCTS_CACHE,
+            key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public Page<ProductDTO> getAllProducts(Pageable pageable) {
-        log.debug("Fetching products page {} with size {} (cache miss)", pageable.getPageNumber(), pageable.getPageSize());
+        log.debug(
+                "Fetching products page {} with size {} (cache miss)",
+                pageable.getPageNumber(),
+                pageable.getPageSize());
         Page<Product> productPage = productRepository.findAll(pageable);
         return productPage.map(productMapper::productToProductDTO);
     }
@@ -42,19 +46,20 @@ public class ProductServiceImpl implements ProductService {
     @Cacheable(value = CacheConfig.PRODUCTS_CACHE, key = "#id")
     public ProductDTO getProductById(Long id) {
         log.debug("Fetching product {} from database (cache miss)", id);
-        return productRepository.findById(id)
+        return productRepository
+                .findById(id)
                 .map(productMapper::productToProductDTO)
                 .orElseThrow(() -> {
                     String msg = messageSource.getMessage(
-                            MessageKeys.PRODUCT.NOT_FOUND,
-                            new Object[]{id},
-                            LocaleContextHolder.getLocale());
+                            MessageKeys.PRODUCT.NOT_FOUND, new Object[] {id}, LocaleContextHolder.getLocale());
                     return new ProductNotFoundException(msg);
                 });
     }
 
     @Override
-    @CacheEvict(value = {CacheConfig.PRODUCTS_CACHE, CacheConfig.ORDERS_CACHE}, allEntries = true)
+    @CacheEvict(
+            value = {CacheConfig.PRODUCTS_CACHE, CacheConfig.ORDERS_CACHE},
+            allEntries = true)
     public ProductDTO createProduct(ProductDTO productDTO) {
         log.debug("Creating new product (will clear products and orders caches)");
 
@@ -67,11 +72,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void validateProductCreation(ProductDTO productDTO) {
-        if (productDTO.getDescription() == null || productDTO.getDescription().trim().isEmpty()) {
+        if (productDTO.getDescription() == null
+                || productDTO.getDescription().trim().isEmpty()) {
             String msg = messageSource.getMessage(
-                    MessageKeys.PRODUCT.DESCRIPTION_REQUIRED,
-                    null,
-                    LocaleContextHolder.getLocale());
+                    MessageKeys.PRODUCT.DESCRIPTION_REQUIRED, null, LocaleContextHolder.getLocale());
             throw new IllegalArgumentException(msg);
         }
     }
